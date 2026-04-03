@@ -1,4 +1,4 @@
-﻿/**
+/**
  * 注册页面 JavaScript
  * 使用 utils.js 中的工具库
  */
@@ -672,10 +672,13 @@ function buildCurrentRegistrationConfig() {
     isBatchMode = elements.regMode.value == "batch"
 
     const [emailServiceType, serviceId] = selectedValue.split(':');
+    const taskProxyElement = document.getElementById('task-proxy');
+
     const baseConfig = {
         email_service_type: emailServiceType,
         registration_type: elements.registrationType ? elements.registrationType.value : 'child',
         reg_mode: isOutlookBatchMode ? 'outlook_batch' : (isBatchMode ? 'batch' : 'single'),
+        proxy: taskProxyElement && taskProxyElement.value.trim() !== '' ? taskProxyElement.value.trim() : null,
         auto_upload_cpa: elements.autoUploadCpa ? elements.autoUploadCpa.checked : false,
         cpa_service_ids: elements.autoUploadCpa && elements.autoUploadCpa.checked ? getSelectedServiceIds(elements.cpaServiceSelect) : [],
         auto_upload_sub2api: elements.autoUploadSub2api ? elements.autoUploadSub2api.checked : false,

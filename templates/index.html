@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
@@ -457,19 +457,15 @@
                                 <div class="form-group" id="registration-type-group">
                                     <label for="registration-type">注册类型</label>
                                     <select id="registration-type" name="registration_type">
+                                        <option value="none" selected>普通</option>
                                         <option value="child">子号</option>
                                         <option value="parent">主号</option>
-                                        <option value="none">普通号</option>
                                     </select>
                                 </div>
 
-                                <div class="form-group" id="registration-type-group">
-                                    <label for="registration-type">注册类型</label>
-                                    <select id="registration-type" name="registration_type">
-                                        <option value="none" selected>普通</option>
-                                        <option value="mother">母号</option>
-                                        <option value="child">子号</option>
-                                    </select>
+                                <div class="form-group" id="task-proxy-group">
+                                    <label for="task-proxy">任务代理 (可选)</label>
+                                    <input type="text" id="task-proxy" name="proxy" placeholder="留空使用系统代理，输入 direct 强制直连">
                                 </div>
 
                                 <div class="form-group" id="batch-count-group" style="display: none;">

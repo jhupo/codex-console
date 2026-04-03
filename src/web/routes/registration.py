@@ -1,4 +1,4 @@
-﻿"""
+"""
 注册任务 API 路由
 """
 
@@ -391,7 +391,10 @@ def _run_sync_registration_task(task_uuid: str, email_service_type: str, proxy: 
             actual_proxy_url = proxy
             proxy_id = None
 
-            if not actual_proxy_url:
+            if actual_proxy_url and str(actual_proxy_url).strip().lower() in ("direct", "local", "none", "直连"):
+                actual_proxy_url = None
+                logger.info(f"任务 {task_uuid} 强制直连 (使用本地网络)")
+            elif not actual_proxy_url:
                 actual_proxy_url, proxy_id = get_proxy_for_registration(db)
                 if actual_proxy_url:
                     logger.info(f"任务 {task_uuid} 使用代理: {actual_proxy_url[:50]}...")
