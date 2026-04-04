@@ -5,6 +5,7 @@ Sub2API 账号上传功能
 
 import json
 import logging
+import urllib.parse
 from datetime import datetime, timezone
 from typing import List, Tuple, Optional
 
@@ -12,6 +13,7 @@ from curl_cffi import requests as cffi_requests
 
 from ...database.session import get_db
 from ...database.models import Account
+from .new_api_upload import resolve_new_api_account_type
 
 logger = logging.getLogger(__name__)
 
@@ -49,21 +51,48 @@ def upload_to_sub2api(
     exported_at = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
 
     account_items = []
+    proxy_items_map = {}
+    
     for acc in accounts:
         if not acc.access_token:
             continue
+            
+        proxy_key = None
+        if acc.proxy_used:
+            try:
+                parsed = urllib.parse.urlparse(acc.proxy_used)
+                if parsed.hostname and parsed.port:
+                    proxy_key = acc.proxy_used
+                    if proxy_key not in proxy_items_map:
+                        proxy_items_map[proxy_key] = {
+                            "proxy_key": proxy_key,
+                            "name": f"Proxy-{parsed.hostname}",
+                            "protocol": parsed.scheme or "http",
+                            "host": parsed.hostname,
+                            "port": parsed.port,
+                            "username": parsed.username or "",
+                            "password": parsed.password or "",
+                            "status": "active"
+                        }
+            except Exception as e:
+                logger.warning(f"Failed to parse proxy {acc.proxy_used}: {e}")
+                
         expires_at = int(acc.expires_at.timestamp()) if acc.expires_at else 0
-        account_items.append({
+        account_type = resolve_new_api_account_type(acc)
+        
+        account_data = {
             "name": acc.email,
             "platform": "openai",
-            "type": "oauth",
+            "type": account_type,
             "credentials": {
                 "access_token": acc.access_token,
+                "id_token": acc.id_token or "",
                 "chatgpt_account_id": acc.account_id or "",
                 "chatgpt_user_id": "",
                 "client_id": acc.client_id or "",
                 "expires_at": expires_at,
                 "expires_in": 863999,
+                "plan_type": account_type,
                 "model_mapping": {
                     "gpt-5.1": "gpt-5.1",
                     "gpt-5.1-codex": "gpt-5.1-codex",
@@ -83,7 +112,12 @@ def upload_to_sub2api(
             "priority": priority,
             "rate_multiplier": 1,
             "auto_pause_on_expired": True,
-        })
+        }
+        
+        if proxy_key:
+            account_data["proxy_key"] = proxy_key
+            
+        account_items.append(account_data)
 
     if not account_items:
         return False, "所有账号均缺少 access_token，无法上传"
@@ -93,7 +127,7 @@ def upload_to_sub2api(
             "type": "newapi-data" if str(target_type).lower() == "newapi" else "sub2api-data",
             "version": 1,
             "exported_at": exported_at,
-            "proxies": [],
+            "proxies": list(proxy_items_map.values()),
             "accounts": account_items,
         },
         "skip_default_group_bind": True,
